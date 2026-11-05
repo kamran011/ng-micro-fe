@@ -1,0 +1,102 @@
+// Design tokens — the single source of truth for every Convo surface.
+// Remotes consume these CSS custom properties; they never hardcode values.
+:root {
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 2rem;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --dur-fast: 120ms;
+  --dur-med: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --sidebar-w: 232px;
+  --topbar-h: 52px;
+
+  // Light — warm paper, deep ink, one green accent.
+  --bg: #f4f2ec;
+  --surface: #ffffff;
+  --surface-2: #faf9f5;
+  --surface-3: #efece4;
+  --ink: #17191d;
+  --ink-2: #484d57;
+  --ink-3: #565c68;
+  --line: #e0dcd1;
+  --line-strong: #c9c4b6;
+
+  --accent: #0f5c4d;
+  --accent-hover: #0b4a3e;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcebe6;
+
+  --ok: #1d7a45;
+  --ok-soft: #dff0e5;
+  --warn: #7a4f06;
+  --warn-soft: #f6e8c9;
+  --crit: #b3361f;
+  --crit-soft: #f7dcd5;
+  --info: #2b55b8;
+  --info-soft: #dde5f7;
+
+  --chart-1: #0f5c4d;
+  --chart-2: #c27a1b;
+  --chart-3: #2b55b8;
+  --chart-4: #8a4f7d;
+  --chart-grid: #e6e2d8;
+
+  --shadow-pop: 0 8px 28px rgb(23 25 29 / 14%), 0 1px 0 rgb(23 25 29 / 6%);
+  --focus: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0d0f12;
+  --surface: #14171b;
+  --surface-2: #181c21;
+  --surface-3: #1e232a;
+  --ink: #eceae4;
+  --ink-2: #b4b8c0;
+  --ink-3: #9ba1ac;
+  --line: #262b33;
+  --line-strong: #363c47;
+
+  --accent: #4fc3a1;
+  --accent-hover: #6fd3b6;
+  --accent-ink: #06231b;
+  --accent-soft: #14312a;
+
+  --ok: #5ccf8c;
+  --ok-soft: #14301f;
+  --warn: #e3b04b;
+  --warn-soft: #36290e;
+  --crit: #ff8a72;
+  --crit-soft: #3d1c15;
+  --info: #8ba9f5;
+  --info-soft: #1a2542;
+
+  --chart-1: #4fc3a1;
+  --chart-2: #e3a14b;
+  --chart-3: #8ba9f5;
+  --chart-4: #d49bc7;
+  --chart-grid: #262b33;
+
+  --shadow-pop: 0 8px 28px rgb(0 0 0 / 50%), 0 0 0 1px rgb(255 255 255 / 5%);
+  color-scheme: dark;
+}

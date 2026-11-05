@@ -1,0 +1,118 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>Studio</h1>
+      <p>Compose the conversation flow, test it, then publish a new version.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="agents" aria-label="Agents">
+      <h2>Agents</h2>
+      <ul>
+        @for (a of store.agents(); track a.id) {
+          <li>
+            <button type="button" [class.sel]="a.id === store.agentId()" [attr.aria-current]="a.id === store.agentId() ? 'true' : null" (click)="store.selectAgent(a.id)">
+              <strong>{{ a.name }}</strong>
+              <span>{{ a.channel }} · v{{ a.publishedVersion }}</span>
+              @if (a.dirty) { <ds-badge tone="warn">unpublished changes</ds-badge> }
+            </button>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <section class="flow" aria-labelledby="flow-h">
+      <header>
+        <div>
+          <h2 id="flow-h">{{ store.agent().name }}</h2>
+          <p>{{ store.agent().nodes.length }} steps · published v{{ store.agent().publishedVersion }}</p>
+        </div>
+        <div class="actions">
+          <button mat-stroked-button [matMenuTriggerFor]="add"><mat-icon fontSet="material-symbols-outlined">add</mat-icon> Add step</button>
+          <mat-menu #add="matMenu">
+            @for (k of kinds; track k.kind) {
+              <button mat-menu-item (click)="store.addNode(k.kind)"><mat-icon fontSet="material-symbols-outlined">{{ k.icon }}</mat-icon>{{ k.label }}</button>
+            }
+          </mat-menu>
+          <button mat-flat-button (click)="publish()" [disabled]="!store.agent().dirty || store.errorCount() > 0" [matTooltip]="store.errorCount() ? 'Fix errors before publishing' : ''">Publish…</button>
+        </div>
+      </header>
+
+      <p class="sr-only" role="status" aria-live="polite">{{ announce() }}</p>
+
+      <ol cdkDropList (cdkDropListDropped)="drop($event)" class="nodes" aria-label="Flow steps">
+        @for (n of store.agent().nodes; track n.id; let i = $index) {
+          <li cdkDrag [cdkDragData]="n" [class.sel]="n.id === store.nodeId()">
+            <span cdkDragHandle class="grip" aria-hidden="true"><mat-icon fontSet="material-symbols-outlined">drag_indicator</mat-icon></span>
+            <button type="button" class="node" (click)="store.selectNode(n.id)" [attr.aria-current]="n.id === store.nodeId() ? 'step' : null">
+              <span class="idx num">{{ i + 1 }}</span>
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{ icon(n.kind) }}</mat-icon>
+              <span class="txt"><strong>{{ n.name || 'Untitled' }}</strong><small>{{ kindLabel(n.kind) }}</small></span>
+              @if (issueIds().has(n.id)) { <ds-badge tone="crit">needs attention</ds-badge> }
+            </button>
+            <span class="reorder">
+              <button mat-icon-button type="button" (click)="move(i, -1, $event)" [disabled]="i === 0" [attr.aria-label]="'Move ' + n.name + ' up'"><mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon></button>
+              <button mat-icon-button type="button" (click)="move(i, 1, $event)" [disabled]="i === store.agent().nodes.length - 1" [attr.aria-label]="'Move ' + n.name + ' down'"><mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon></button>
+              <button mat-icon-button type="button" (click)="store.removeNode(n.id)" [attr.aria-label]="'Delete ' + n.name"><mat-icon fontSet="material-symbols-outlined">delete</mat-icon></button>
+            </span>
+          </li>
+        }
+      </ol>
+
+      <div class="issues" aria-label="Validation">
+        <h3>Pre-flight</h3>
+        @for (i of store.issues(); track $index) {
+          <p><ds-badge [tone]="i.level === 'error' ? 'crit' : 'warn'">{{ i.level }}</ds-badge> {{ i.message }}</p>
+        } @empty {
+          <p><ds-badge tone="ok">pass</ds-badge> Ready to publish.</p>
+        }
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel" aria-labelledby="insp-h">
+        <h2 id="insp-h">Step settings</h2>
+        @if (store.node(); as n) {
+          <form [formGroup]="form">
+            <mat-form-field appearance="outline">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" />
+              @if (form.controls.name.errors) { <mat-error>Name is required (max 40 characters).</mat-error> }
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Prompt</mat-label>
+              <textarea matInput rows="5" formControlName="prompt"></textarea>
+              <mat-hint align="end" class="num">{{ form.controls.prompt.value.length }}/600</mat-hint>
+              @if (form.controls.prompt.errors?.['required']) { <mat-error>A prompt is required to publish.</mat-error> }
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Timeout (seconds)</mat-label>
+              <input matInput type="number" formControlName="timeoutSec" />
+              @if (form.controls.timeoutSec.errors) { <mat-error>Enter 1–300 seconds.</mat-error> }
+            </mat-form-field>
+            <mat-slide-toggle formControlName="fallback">Fall back to a clarifying question</mat-slide-toggle>
+          </form>
+        } @else {
+          <ds-empty title="No step selected" hint="Pick a step in the flow." />
+        }
+      </section>
+
+      <section class="panel" aria-labelledby="test-h">
+        <h2 id="test-h">Test run</h2>
+        <mat-form-field appearance="outline">
+          <mat-label>Sample message</mat-label>
+          <input matInput [value]="utterance()" (input)="utterance.set($any($event.target).value)" (keydown.enter)="run()" />
+        </mat-form-field>
+        <button mat-stroked-button (click)="run()">Run flow</button>
+        @if (store.trace().length) {
+          <ol class="trace" aria-label="Trace">
+            @for (t of store.trace(); track t.nodeId) {
+              <li><span class="num ms">{{ t.ms }} ms</span><strong>{{ t.name }}</strong><span>{{ t.output }}</span></li>
+            }
+          </ol>
+        }
+      </section>
+    </aside>
+  </div>
+</div>

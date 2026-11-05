@@ -1,0 +1,126 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>Sales Cockpit</h1>
+      <p>Every active conversation, ranked by what needs you next.</p>
+    </div>
+    <mat-slide-toggle [checked]="store.liveFeed()" (change)="store.setLiveFeed($event.checked)">Live updates</mat-slide-toggle>
+  </header>
+
+  <section class="kpis" aria-label="Key figures">
+    <ds-stat label="Open pipeline" [value]="(store.pipelineValue() / 1000).toFixed(0)" unit="k USD" delta="+8.2% vs last week" trend="good" [spark]="[4,5,5,7,6,8,9,9,11]" />
+    <ds-stat label="Live conversations" [value]="store.liveCount()" delta="avg. first reply 41s" [spark]="[2,3,2,4,5,4,3,4,3]" />
+    <ds-stat label="At-risk deals" [value]="store.atRisk()" [trend]="store.atRisk() > 1 ? 'bad' : 'flat'" delta="negative sentiment" />
+    <ds-stat label="Unread" [value]="store.unreadTotal()" delta="across all threads" />
+  </section>
+
+  <div class="sr-only" aria-live="polite" role="status">{{ announce() }}</div>
+
+  <mat-tab-group animationDuration="0ms" class="tabs">
+    <mat-tab label="Conversations">
+      <div class="workspace">
+        <section class="queue" aria-label="Conversation queue">
+          <div class="queue-tools">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Search</mat-label>
+              <input matInput type="search" [ngModel]="store.query()" (ngModelChange)="store.setQuery($event)" placeholder="Name, company, intent" />
+            </mat-form-field>
+            <mat-button-toggle-group [value]="store.statusFilter()" (change)="setFilter($event.value)" aria-label="Filter by status" hideSingleSelectionIndicator>
+              <mat-button-toggle value="all">All</mat-button-toggle>
+              <mat-button-toggle value="live">Live</mat-button-toggle>
+              <mat-button-toggle value="waiting">Waiting</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+          <ul>
+            @for (c of store.visible(); track c.id) {
+              <li>
+                <button type="button" class="row" [class.sel]="c.id === store.selectedId()" [attr.aria-current]="c.id === store.selectedId() ? 'true' : null" (click)="store.select(c.id)">
+                  <span class="top">
+                    <strong>{{ c.contact }}</strong>
+                    @if (c.unread) { <span class="unread num" [attr.aria-label]="c.unread + ' unread'">{{ c.unread }}</span> }
+                  </span>
+                  <span class="co">{{ c.company }} · <span class="num">{{ c.value | currency: 'USD' : 'symbol' : '1.0-0' }}</span></span>
+                  <span class="last">{{ c.messages.at(-1)?.text }}</span>
+                  <span class="meta">
+                    <ds-badge [tone]="tone(c)">{{ c.status }}</ds-badge>
+                    <ds-badge>{{ c.intent }}</ds-badge>
+                  </span>
+                </button>
+              </li>
+            } @empty {
+              <li><ds-empty title="No conversations match" hint="Clear the search or switch the status filter." /></li>
+            }
+          </ul>
+        </section>
+
+        @if (store.selected(); as c) {
+          <section class="convo" [attr.aria-label]="'Conversation with ' + c.contact">
+            <header>
+              <div>
+                <h2>{{ c.contact }}</h2>
+                <p>{{ c.role }}, {{ c.company }}</p>
+              </div>
+              <ds-badge [tone]="mood(c.sentiment).tone">{{ mood(c.sentiment).label }}</ds-badge>
+            </header>
+            <div class="thread" #thread tabindex="0" role="log" aria-label="Messages">
+              @for (m of c.messages; track m.id) {
+                <div class="msg" [class]="m.from">
+                  <span class="who">{{ m.from === 'contact' ? c.contact.split(' ')[0] : m.from === 'agent' ? 'Convo agent' : 'You' }} · <time class="num">{{ m.at | date: 'HH:mm' }}</time></span>
+                  <p>{{ m.text }}</p>
+                </div>
+              }
+            </div>
+            <div class="suggest">
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">auto_awesome</mat-icon>
+              <p><strong>Next best action.</strong> {{ c.suggestion }}</p>
+              <button mat-stroked-button type="button" (click)="useSuggestion(c)">Use as draft</button>
+            </div>
+            <form class="composer" (submit)="$event.preventDefault(); send(c)">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Reply to {{ c.contact.split(' ')[0] }}</mat-label>
+                <textarea matInput rows="2" [ngModel]="draft()" (ngModelChange)="draft.set($event)" name="draft"></textarea>
+              </mat-form-field>
+              <button mat-flat-button type="submit" [disabled]="!draft().trim()">Send</button>
+            </form>
+          </section>
+
+          <aside class="deal" aria-label="Deal details">
+            <h2>Deal</h2>
+            <dl>
+              <dt>Value</dt><dd class="num">{{ c.value | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+              <dt>Intent</dt><dd>{{ c.intent }}</dd>
+              <dt>Sentiment</dt>
+              <dd>
+                <span class="meter" role="meter" aria-label="Sentiment" aria-valuemin="-1" aria-valuemax="1" [attr.aria-valuenow]="c.sentiment">
+                  <i [style.left.%]="(c.sentiment + 1) * 50"></i>
+                </span>
+              </dd>
+            </dl>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Stage</mat-label>
+              <mat-select [value]="c.stage" (selectionChange)="move(c, $event.value)">
+                @for (s of stages; track s) { <mat-option [value]="s">{{ s }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+          </aside>
+        } @else {
+          <ds-empty class="wide" title="Select a conversation" hint="Choose a thread from the queue to see its transcript." />
+        }
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Pipeline">
+      <div class="pipeline">
+        <ds-chart label="Pipeline value by stage" [summary]="pipelineSummary()" [option]="pipelineOption()" style="--chart-h: 280px" />
+        <table mat-table [dataSource]="tableRows()" matSort aria-label="Pipeline by stage">
+          <ng-container matColumnDef="stage"><th mat-header-cell *matHeaderCellDef>Stage</th><td mat-cell *matCellDef="let r">{{ r.stage }}</td></ng-container>
+          <ng-container matColumnDef="count"><th mat-header-cell *matHeaderCellDef>Deals</th><td mat-cell class="num" *matCellDef="let r">{{ r.count }}</td></ng-container>
+          <ng-container matColumnDef="value"><th mat-header-cell *matHeaderCellDef>Value</th><td mat-cell class="num" *matCellDef="let r">{{ r.value | currency: 'USD' : 'symbol' : '1.0-0' }}</td></ng-container>
+          <ng-container matColumnDef="share"><th mat-header-cell *matHeaderCellDef>Share</th><td mat-cell class="num" *matCellDef="let r">{{ (r.share * 100).toFixed(0) }}%</td></ng-container>
+          <tr mat-header-row *matHeaderRowDef="cols"></tr>
+          <tr mat-row *matRowDef="let row; columns: cols"></tr>
+        </table>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

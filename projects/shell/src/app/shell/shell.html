@@ -1,0 +1,62 @@
+<a class="skip" href="#main">Skip to content</a>
+
+<aside class="side">
+  <a class="brand" routerLink="/" aria-label="Convo Console home">
+    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+      <rect width="32" height="32" rx="7" fill="var(--accent)" />
+      <path d="M9 11h14M9 16h9M9 21h12" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" />
+    </svg>
+    <span>Convo<em>Console</em></span>
+  </a>
+
+  <nav aria-label="Applications">
+    <h2 class="group">Applications</h2>
+    @for (r of registry.remotes(); track r.id) {
+      <a [routerLink]="['/', r.id]" routerLinkActive="active" class="item">
+        <mat-icon aria-hidden="true" fontSet="material-symbols-outlined">{{ r.manifest?.icon ?? 'extension_off' }}</mat-icon>
+        <span class="lbl">{{ r.manifest?.label ?? r.id }}</span>
+        @if (r.status !== 'online') {
+          <span class="warn" [matTooltip]="r.status" [attr.aria-label]="r.id + ' ' + r.status">!</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <nav aria-label="Platform">
+    <h2 class="group">Platform</h2>
+    <a routerLink="/system" routerLinkActive="active" class="item">
+      <mat-icon aria-hidden="true" fontSet="material-symbols-outlined">palette</mat-icon>
+      <span class="lbl">Design system</span>
+    </a>
+    <a routerLink="/architecture" routerLinkActive="active" class="item">
+      <mat-icon aria-hidden="true" fontSet="material-symbols-outlined">hub</mat-icon>
+      <span class="lbl">Architecture</span>
+    </a>
+  </nav>
+
+  <div class="foot">
+    <span class="env"><i aria-hidden="true"></i> {{ registry.onlineCount() }}/{{ registry.remotes().length }} remotes online</span>
+  </div>
+</aside>
+
+<div class="col">
+  <header class="top">
+    <span class="crumb">Convo workspace&nbsp;<span aria-hidden="true">/</span>&nbsp; <strong>Acme Corp</strong></span>
+    <span class="grow"></span>
+    <button mat-icon-button (click)="theme.toggle()" [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'" [matTooltip]="'Toggle theme'">
+      <mat-icon fontSet="material-symbols-outlined">{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+    <button mat-button [matMenuTriggerFor]="user" class="user" aria-label="Account menu">
+      <span class="avatar" aria-hidden="true">AK</span>
+      Amara K.
+    </button>
+    <mat-menu #user="matMenu" xPosition="before">
+      <button mat-menu-item>Profile</button>
+      <button mat-menu-item>Workspace settings</button>
+      <button mat-menu-item>Sign out</button>
+    </mat-menu>
+  </header>
+  <main id="main" tabindex="-1">
+    <router-outlet />
+  </main>
+</div>

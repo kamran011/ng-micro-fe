@@ -1,0 +1,82 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>Design system</h1>
+      <p>Tokens and components shared by every Convo application. Consumed through <code>&#64;convo/ds</code>; shipped to remotes as a federation singleton.</p>
+    </div>
+  </header>
+
+  <section class="block" aria-labelledby="t-color">
+    <h2 id="t-color">Colour</h2>
+    <p class="lead">Neutrals carry the interface; green is the single brand accent. Status colours are reserved for meaning.</p>
+    <div class="swatches">
+      @for (s of surfaces; track s.token) {
+        <figure><div class="chip" [style.background]="'var(' + s.token + ')'"></div><figcaption>{{ s.label }}<code>{{ s.token }}</code></figcaption></figure>
+      }
+    </div>
+    <div class="swatches">
+      @for (s of semantic; track s.token) {
+        <figure><div class="chip" [style.background]="'var(' + s.token + ')'"></div><figcaption>{{ s.label }}<code>{{ s.token }}</code></figcaption></figure>
+      }
+      @for (s of charts; track s.token) {
+        <figure><div class="chip" [style.background]="'var(' + s.token + ')'"></div><figcaption>{{ s.label }}<code>{{ s.token }}</code></figcaption></figure>
+      }
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="t-type">
+    <h2 id="t-type">Typography</h2>
+    <p class="lead">IBM Plex Sans for interface text, Plex Mono with tabular figures for every number so columns align and live values don’t jitter.</p>
+    <table class="spec">
+      <tbody>
+        @for (t of type; track t.token) {
+          <tr><th scope="row"><code>{{ t.token }}</code></th><td [style.font-size]="'var(' + t.token + ')'">{{ t.sample }}</td></tr>
+        }
+        <tr><th scope="row"><code>.num</code></th><td class="num" style="font-size: var(--fs-xl)">1,234,567.89</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="block" aria-labelledby="c-badge">
+    <h2 id="c-badge">Badge</h2>
+    <p class="lead">Compact status marker. Never colour-only: each tone has its own glyph.</p>
+    <div class="demo">@for (t of tones; track t) { <ds-badge [tone]="t">{{ t }}</ds-badge> }</div>
+    <table class="api"><thead><tr><th>Input</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>@for (a of badgeApi; track a.name) { <tr><td><code>{{ a.name }}</code></td><td><code>{{ a.type }}</code></td><td><code>{{ a.def }}</code></td><td>{{ a.desc }}</td></tr> }</tbody></table>
+  </section>
+
+  <section class="block" aria-labelledby="c-stat">
+    <h2 id="c-stat">Stat</h2>
+    <div class="demo stats">
+      <ds-stat label="p95 latency" value="312" unit="ms" delta="SLO 450 ms" trend="good" [spark]="spark" />
+      <ds-stat label="Error rate" value="1.8" unit="%" delta="+0.9 pts" trend="bad" />
+    </div>
+    <table class="api"><thead><tr><th>Input</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>@for (a of statApi; track a.name) { <tr><td><code>{{ a.name }}</code></td><td><code>{{ a.type }}</code></td><td><code>{{ a.def }}</code></td><td>{{ a.desc }}</td></tr> }</tbody></table>
+  </section>
+
+  <section class="block" aria-labelledby="c-chart">
+    <h2 id="c-chart">Chart</h2>
+    <p class="lead">A themed ECharts wrapper (<code>ds-chart</code>). See it live in Telemetry and Sales Cockpit. Charts must always provide <code>label</code> and <code>summary</code>.</p>
+    <table class="api"><thead><tr><th>Input</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>@for (a of chartApi; track a.name) { <tr><td><code>{{ a.name }}</code></td><td><code>{{ a.type }}</code></td><td><code>{{ a.def }}</code></td><td>{{ a.desc }}</td></tr> }</tbody></table>
+  </section>
+
+  <section class="block" aria-labelledby="c-mat">
+    <h2 id="c-mat">Angular Material, themed</h2>
+    <p class="lead">Material components inherit the brand through system-token mapping; teams never restyle them per feature.</p>
+    <div class="demo">
+      <button mat-flat-button>Primary</button>
+      <button mat-stroked-button>Secondary</button>
+      <button mat-button>Tertiary</button>
+      <button mat-flat-button disabled>Disabled</button>
+      <mat-form-field appearance="outline"><mat-label>Field</mat-label><input matInput value="Value" /></mat-form-field>
+      <mat-slide-toggle checked>Toggle</mat-slide-toggle>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="c-misc">
+    <h2 id="c-misc">Empty state & sparkline</h2>
+    <div class="demo"><ds-empty title="Nothing here yet" hint="Explain what will appear and why." /><div style="width: 160px"><ds-sparkline [data]="spark" /></div></div>
+  </section>
+</div>

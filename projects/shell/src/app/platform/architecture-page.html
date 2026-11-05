@@ -1,0 +1,70 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>Architecture</h1>
+      <p>A shell hosts independently built and deployed remotes, composed at runtime with Native Federation.</p>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="topo">
+    <h2 id="topo">Runtime topology</h2>
+    <figure class="diagram">
+      <svg viewBox="0 0 820 250" role="img" aria-labelledby="dtitle ddesc">
+        <title id="dtitle">Micro-frontend topology</title>
+        <desc id="ddesc">The shell at :4200 loads the manifests of three remotes, Sales Cockpit :4201, Studio :4202 and Telemetry :4203. All use the shared packages @convo/contract and @convo/ds, plus Angular as singletons.</desc>
+        <rect x="10" y="10" width="800" height="78" rx="8" class="host" />
+        <text x="30" y="40" class="h">Shell · host · :4200</text>
+        <text x="30" y="62" class="s">router · theme · observability · SHELL_API implementation · remote registry</text>
+        @for (r of registry.remotes(); track r.id; let i = $index) {
+          <line [attr.x1]="30 + i * 270 + 120" y1="88" [attr.x2]="30 + i * 270 + 120" y2="130" class="edge" [class.down]="r.status !== 'online'" />
+          <rect [attr.x]="30 + i * 270" y="130" width="240" height="64" rx="8" class="remote" [class.down]="r.status !== 'online'" />
+          <text [attr.x]="46 + i * 270" y="156" class="h">{{ r.manifest?.label ?? r.id }}</text>
+          <text [attr.x]="46 + i * 270" y="178" class="s">{{ r.url.replace('/remoteEntry.json', '').replace('http://', '') }} · {{ r.status }}</text>
+        }
+        <rect x="10" y="208" width="800" height="34" rx="8" class="shared" />
+        <text x="30" y="230" class="s">Shared singletons — &#64;angular/*  ·  rxjs  ·  &#64;convo/contract  ·  &#64;convo/ds  ·  &#64;ngrx/signals</text>
+      </svg>
+    </figure>
+  </section>
+
+  <section class="card" aria-labelledby="reg">
+    <div class="row-head"><h2 id="reg">Remote registry</h2><span class="sub">Discovered from <code>federation.manifest.json</code>; each remote self-describes via <code>./manifest</code>.</span></div>
+    <table>
+      <thead><tr><th>Remote</th><th>Status</th><th>Version</th><th>Contract</th><th>Owner</th><th>Entry</th><th></th></tr></thead>
+      <tbody>
+        @for (r of registry.remotes(); track r.id) {
+          <tr>
+            <th scope="row">{{ r.manifest?.label ?? r.id }}</th>
+            <td><ds-badge [tone]="tone(r.status)">{{ r.status }}</ds-badge></td>
+            <td class="num">{{ r.manifest?.version ?? '—' }}</td>
+            <td class="num">{{ r.manifest ? 'v' + r.manifest.shellApi : '—' }}</td>
+            <td>{{ r.manifest?.owner ?? '—' }}</td>
+            <td class="num url">{{ r.url }}</td>
+            <td><button mat-button (click)="registry.retry(r.id)">Re-probe</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <div class="two">
+    <section class="card" aria-labelledby="contract">
+      <h2 id="contract">Integration contract · v{{ apiVersion }}</h2>
+      <ul class="plain">
+        <li><strong>Exposes.</strong> Every remote exposes <code>./manifest</code> (identity, version, contract major, owner) and <code>./routes</code> (a standard Angular <code>Routes</code>).</li>
+        <li><strong>Consumes.</strong> The shell provides <code>SHELL_API</code>: <code>theme</code>, <code>track()</code>, <code>notify()</code>. Remotes never touch shell internals.</li>
+        <li><strong>Versioning.</strong> <code>SHELL_API_VERSION</code> is a major. Additive changes keep the major; breaking changes bump it and the shell refuses mismatched remotes (shown as <em>incompatible</em>) while the rest of the app keeps running.</li>
+        <li><strong>Failure isolation.</strong> A remote that is offline degrades to a fallback page with retry. Its failure never blocks shell startup.</li>
+        <li><strong>Shared.</strong> Angular, RxJS, NgRx Signals, <code>&#64;convo/contract</code> and <code>&#64;convo/ds</code> are singletons with strict versions, so there is one SHELL_API token and one design system at runtime.</li>
+        <li><strong>Deploy.</strong> Each remote builds and ships on its own cadence; the shell only needs its entry in the manifest.</li>
+      </ul>
+    </section>
+    <section class="card" aria-labelledby="std">
+      <h2 id="std">Review checklist for implementation squads</h2>
+      @for (g of checklist; track g.area) {
+        <h3>{{ g.area }}</h3>
+        <ul class="check">@for (i of g.items; track i) { <li>{{ i }}</li> }</ul>
+      }
+    </section>
+  </div>
+</div>

@@ -1,0 +1,49 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "strict": true,
+    "paths": {
+      "@convo/contract": [
+        "./projects/shared/contract/index.ts"
+      ],
+      "@convo/ds": [
+        "./projects/shared/ds/index.ts"
+      ]
+    },
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ]
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./projects/shell/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/cockpit/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/studio/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/telemetry/tsconfig.app.json"
+    }
+  ]
+}

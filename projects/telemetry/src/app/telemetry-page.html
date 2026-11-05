@@ -1,0 +1,71 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>Telemetry</h1>
+      <p>Streaming at 1&nbsp;Hz · {{ store.selectedDef().name }} owned by {{ store.selectedDef().owner }}</p>
+    </div>
+    <div class="tools">
+      <mat-button-toggle-group [value]="store.range()" (change)="store.setRange($event.value)" aria-label="Time range" hideSingleSelectionIndicator>
+        @for (r of ranges; track r) { <mat-button-toggle [value]="r">{{ r }}</mat-button-toggle> }
+      </mat-button-toggle-group>
+      <mat-slide-toggle [checked]="!store.paused()" (change)="store.setPaused(!$event.checked)">Streaming</mat-slide-toggle>
+    </div>
+  </header>
+
+  <section class="kpis" aria-label="Current values">
+    <ds-stat label="p95 latency" [value]="store.latest()?.p95 ?? 0" unit="ms" [delta]="'SLO ' + store.selectedDef().sloP95 + ' ms'" [trend]="(store.latest()?.p95 ?? 0) > store.selectedDef().sloP95 ? 'bad' : 'good'" />
+    <ds-stat label="Throughput" [value]="store.latest()?.rps ?? 0" unit="req/s" />
+    <ds-stat label="Error rate" [value]="store.latest()?.errPct ?? 0" unit="%" [trend]="(store.latest()?.errPct ?? 0) > 1 ? 'bad' : 'flat'" />
+    <ds-stat label="Error budget left" [value]="store.errorBudget().toFixed(0)" unit="%" delta="rolling 15 min" [trend]="store.errorBudget() < 60 ? 'bad' : 'good'" />
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Latency</h2>
+      <ds-chart label="Latency percentiles over time" [summary]="latencySummary()" [option]="latencyOption()" />
+    </section>
+    <section class="card">
+      <h2>Throughput</h2>
+      <ds-chart label="Requests per second over time" [summary]="rpsSummary()" [option]="rpsOption()" />
+    </section>
+  </div>
+
+  <div class="grid lower">
+    <section class="card flush">
+      <h2 class="pad">Services</h2>
+      <table mat-table [dataSource]="store.table()" aria-label="Service health">
+        <ng-container matColumnDef="service">
+          <th mat-header-cell *matHeaderCellDef>Service</th>
+          <td mat-cell *matCellDef="let r">
+            <button type="button" class="link" [class.sel]="r.def.id === store.selected()" [attr.aria-pressed]="r.def.id === store.selected()" (click)="store.selectService(r.def.id)">{{ r.def.name }}</button>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let r"><ds-badge [tone]="tone(r.health)">{{ r.health }}</ds-badge></td></ng-container>
+        <ng-container matColumnDef="p95"><th mat-header-cell *matHeaderCellDef>p95</th><td mat-cell class="num" *matCellDef="let r">{{ r.last.p95 }} ms</td></ng-container>
+        <ng-container matColumnDef="rps"><th mat-header-cell *matHeaderCellDef>req/s</th><td mat-cell class="num" *matCellDef="let r">{{ r.last.rps }}</td></ng-container>
+        <ng-container matColumnDef="err"><th mat-header-cell *matHeaderCellDef>Errors</th><td mat-cell class="num" *matCellDef="let r">{{ r.last.errPct }}%</td></ng-container>
+        <ng-container matColumnDef="trend"><th mat-header-cell *matHeaderCellDef>Last 60 s</th><td mat-cell class="spk" *matCellDef="let r"><ds-sparkline [data]="r.spark" /></td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="cols"></tr>
+        <tr mat-row *matRowDef="let row; columns: cols"></tr>
+      </table>
+    </section>
+
+    <section class="card">
+      <div class="alerts-head">
+        <h2>Alerts</h2>
+        @if (store.alerts().length) { <button type="button" class="link" (click)="store.clearAlerts()">Clear</button> }
+      </div>
+      <ul class="alerts" aria-live="polite" aria-label="Recent alerts">
+        @for (a of store.alerts(); track a.id) {
+          <li>
+            <ds-badge [tone]="a.severity">{{ a.severity === 'crit' ? 'Critical' : 'Warning' }}</ds-badge>
+            <div><strong>{{ a.service }}</strong><span>{{ a.message }}</span></div>
+            <time class="num">{{ a.at | date: 'HH:mm:ss' }}</time>
+          </li>
+        } @empty {
+          <li><ds-empty title="All quiet" hint="SLO breaches will appear here as they happen." /></li>
+        }
+      </ul>
+    </section>
+  </div>
+</div>
