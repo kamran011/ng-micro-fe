@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/angular';
+import { componentWrapperDecorator, type Meta, type StoryObj } from '@storybook/angular';
 import { DsChart } from './ds-chart';
 
 // Fixed series: stories (and their visual baselines) must be deterministic.
@@ -10,7 +10,7 @@ const meta: Meta<DsChart> = {
   title: 'Components/Chart',
   component: DsChart,
   tags: ['autodocs'],
-  decorators: [(s) => ({ ...s(), template: `<div style="max-width:720px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px"><story /></div>` })],
+  decorators: [componentWrapperDecorator((s) => `<div style="max-width:720px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px">${s}</div>`)],
   parameters: { docs: { description: { component: 'Themed ECharts wrapper. `label` and `summary` are required: they are the accessible text equivalent of the canvas.' } } },
 };
 export default meta;
@@ -28,7 +28,7 @@ export const Latency: Story = {
         { name: 'p50', type: 'line', showSymbol: false, smooth: true, data: p50 },
         {
           name: 'p95', type: 'line', showSymbol: false, smooth: true, data: p95,
-          markLine: { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#b3361f' }, data: [{ yAxis: 450 }] },
+          markLine: { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#b3361f' }, label: { formatter: 'SLO', position: 'insideEndTop' }, data: [{ yAxis: 450 }] },
         },
       ],
     },

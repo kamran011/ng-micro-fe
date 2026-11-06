@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/angular';
+import { componentWrapperDecorator, type Meta, type StoryObj } from '@storybook/angular';
 import { DsStat } from './ds-stat';
 
 const SPARK = [3, 5, 4, 7, 6, 9, 8, 12, 10, 14];
@@ -8,7 +8,7 @@ const meta: Meta<DsStat> = {
   component: DsStat,
   tags: ['autodocs'],
   args: { label: 'p95 latency', value: 312, unit: 'ms', delta: 'SLO 450 ms', trend: 'good', spark: null },
-  decorators: [(s) => ({ ...s(), template: `<div style="max-width:260px"><story /></div>` })],
+  decorators: [componentWrapperDecorator((s) => `<div style="max-width:260px">${s}</div>`)],
 };
 export default meta;
 type Story = StoryObj<DsStat>;

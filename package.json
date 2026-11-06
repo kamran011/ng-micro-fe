@@ -10,7 +10,9 @@
     "build:remotes": "ng build cockpit && ng build studio && ng build telemetry",
     "e2e": "playwright test",
     "storybook": "ng run design-system:storybook",
-    "build-storybook": "ng run design-system:build-storybook"
+    "build-storybook": "ng run design-system:build-storybook",
+    "test:visual": "playwright test -c playwright.visual.config.ts",
+    "test:visual:update": "playwright test -c playwright.visual.config.ts --update-snapshots"
   },
   "private": true,
   "packageManager": "npm@10.9.9",
@@ -50,6 +52,7 @@
     "@storybook/angular": "^10.6.6",
     "concurrently": "^10.0.6",
     "es-module-shims": "^2.8.4",
+    "http-server": "^14.1.1",
     "jsdom": "^30.0.0",
     "material-symbols": "^0.48.3",
     "prettier": "^3.8.1",

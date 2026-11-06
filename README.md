@@ -45,6 +45,10 @@ npx ng serve telemetry    # http://localhost:4203
 | `npm run build` | Production build of every remote, then the shell |
 | `npm test` | Unit tests (Vitest via `@angular/build:unit-test`) for all four projects |
 | `npm run e2e` | Playwright journeys + axe accessibility scans (starts the stack if it isn't running) |
+| `npm run storybook` | Storybook for the design system at http://localhost:6006 |
+| `npm run build-storybook` | Static Storybook build into `storybook-static/` |
+| `npm run test:visual` | Visual regression: every story, light + dark, against committed baselines (needs `build-storybook` first) |
+| `npm run test:visual:update` | Regenerate baselines after an intentional visual change |
 
 For e2e on a machine with a pre-installed Chromium, set `CHROME_PATH=/path/to/chrome`.
 
@@ -120,9 +124,11 @@ projects/
   telemetry/        Remote: real-time telemetry
   shared/
     contract/       @convo/contract: RemoteManifest, ShellApi, SHELL_API token, version
-    ds/             @convo/ds: design-system components (badge, stat, sparkline, chart, empty)
+    ds/             @convo/ds: design-system components + their *.stories.ts
     styles/         tokens + Material theme mapping (consumed by every app's styles.scss)
-e2e/                Playwright journeys and axe scans
+e2e/                Playwright journeys and axe scans (whole app)
+e2e-visual/         Visual regression suite + committed baselines (__screenshots__)
+.storybook/         Storybook config (main, preview, tsconfig)
 docs/screenshots/
 ```
 
@@ -158,6 +164,35 @@ Tokens live in `projects/shared/styles/_tokens.scss` as CSS custom properties: c
 
 * **Telemetry**: four services streaming at 1 Hz into a 900-point ring buffer (15 min). Range toggles (1m / 5m / 15m) are a computed window over the buffer. SLO breaches (p95 > SLO) raise an alert once per breach, not once per sample. Health is derived from p95 vs SLO and error rate. The error budget is a rolling calculation.
 * **Cockpit**: simulated inbound messages arrive every 9 s, bump unread counts, re-rank the queue and announce via an `aria-live` region without stealing focus. The pipeline view pairs a bar chart with a Material table, so every figure is available as text.
+
+## Storybook
+
+Storybook 10 (`@storybook/angular`) documents the design system in isolation: `npm run storybook`.
+
+* **Stories** sit beside the components in `projects/shared/ds/*.stories.ts` (badge, stat, sparkline, empty state, chart) plus a *Foundations* group for colour tokens, the type scale and the Material components as themed by the tokens. Each component has autodocs generated from its signal `input()`s.
+* **Theme toolbar** switches light/dark. The preview sets `data-theme` and feeds the same theme signal the shell provides through `SHELL_API`, so `ds-chart` re-themes exactly as it does in the app.
+* **Accessibility:** `@storybook/addon-a11y` runs axe on every story in the UI.
+* **Deterministic by design:** stories use fixed data (no timers or randomness), and fonts and icons are **self-hosted** (`@fontsource/*`, `material-symbols`) so renders never depend on the network.
+* Storybook is built through a small `design-system` project in `angular.json`, which carries the shared global styles.
+
+## Visual regression testing
+
+`e2e-visual/` turns **every story into a screenshot test, in light and dark** (36 today, 18 stories x 2 themes). New stories are picked up automatically from the built `storybook-static/index.json`.
+
+```bash
+npm run build-storybook         # once, and after any component/token change
+npm run test:visual             # compare against baselines in e2e-visual/__screenshots__
+npm run test:visual:update      # accept intentional changes, then review the PNG diff in git
+```
+
+How it works: Playwright serves the static Storybook, opens each story's isolated `iframe.html?id=...&globals=theme:<light|dark>`, waits for fonts and canvas charts to settle, and runs `toHaveScreenshot` on the story root (animations disabled, `maxDiffPixelRatio` 0.002). On failure it writes expected/actual/diff images to `test-results/` and an HTML report to `playwright-report-visual/`.
+
+Notes for contributors and CI:
+
+* Baselines are **platform-specific** (font rasterisation and anti-aliasing). They were generated on Linux with Chromium; generate and compare in the same environment (e.g. the Playwright Docker image in CI), never mix OSes.
+* Review baseline changes like code: a changed PNG in a PR is the visual diff.
+* The suite was verified to be sensitive: temporarily changing `--accent` fails the affected stories, and reverting restores a clean run.
+* It already paid for itself. Its first baselines exposed a real bug in `ds-chart`: option objects were merged shallowly, so any chart that set `xAxis`/`yAxis` lost the themed grid and label colours (bright white gridlines in dark mode). The component now deep-merges options.
 
 ## Accessibility
 
@@ -211,9 +246,10 @@ Each remote builds on its own (`ng build <name>`) to `dist/<name>` and is served
 * **Simulated data and streams.** No backend, auth, or persistence. State resets on reload.
 * **Single repository.** Remotes live in one workspace for ease of review. They build and deploy independently, but cross-team repo isolation isn't demonstrated.
 * **Fonts and icons come from Google Fonts** at runtime. Self-host them for air-gapped or strict-CSP environments.
-* **No Storybook / visual regression yet.** The in-app design-system page is the living documentation. Storybook plus visual snapshots would be the next step.
+* **Visual regression covers the design system, not full app screens.** App pages stream live data, so they are covered by e2e + axe instead. Pinning time and random seeds would allow page-level snapshots.
+* **Visual baselines are Linux/Chromium only** and there is no CI workflow in the repo yet; wire `build-storybook` + `test:visual` into the pipeline using the same image that generated the baselines.
 * Remote versions in manifests are static strings. In a real pipeline they would be stamped at build time.
 
 ## Tech stack
 
-Angular 22 (standalone components, signals, `OnPush`, new control flow, route-level providers) · TypeScript 6 · RxJS 7 · Angular Material + CDK 22 · NgRx Signals 22 · Native Federation 22 · Apache ECharts 6 · Vitest · Playwright + axe-core.
+Angular 22 (standalone components, signals, `OnPush`, new control flow, route-level providers) · TypeScript 6 · RxJS 7 · Angular Material + CDK 22 · NgRx Signals 22 · Native Federation 22 · Apache ECharts 6 · Storybook 10 · Vitest · Playwright (e2e + visual regression) + axe-core.

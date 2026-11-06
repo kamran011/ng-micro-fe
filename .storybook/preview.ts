@@ -1,12 +1,6 @@
 import { signal } from '@angular/core';
 import { applicationConfig, type Preview } from '@storybook/angular';
 import { SHELL_API, standaloneShellApi } from '@convo/contract';
-import '@fontsource/ibm-plex-sans/400.css';
-import '@fontsource/ibm-plex-sans/500.css';
-import '@fontsource/ibm-plex-sans/600.css';
-import '@fontsource/ibm-plex-mono/400.css';
-import '@fontsource/ibm-plex-mono/500.css';
-import 'material-symbols/outlined.css';
 
 /** Mirrors the shell's theme signal so ds-chart re-themes inside stories. */
 const theme = signal<'light' | 'dark'>('light');

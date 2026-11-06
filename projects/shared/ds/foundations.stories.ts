@@ -59,7 +59,7 @@ export const MaterialThemed: Story = {
   name: 'Material, themed',
   render: () => ({
     template: `
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:12px">
         <button mat-flat-button>Primary</button>
         <button mat-stroked-button>Secondary</button>
         <button mat-button>Tertiary</button>

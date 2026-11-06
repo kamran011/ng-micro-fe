@@ -15,9 +15,27 @@ import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { SHELL_API } from '@convo/contract';
 
-echarts.use([LineChart, BarChart, GridComponent, TooltipComponent, MarkLineComponent, CanvasRenderer]);
+echarts.use([
+  LineChart,
+  BarChart,
+  GridComponent,
+  TooltipComponent,
+  MarkLineComponent,
+  CanvasRenderer,
+]);
 
-const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
+/** Deep-merge plain objects so a caller's `yAxis: { name }` keeps the themed grid and label styling. */
+const merge = (base: Obj, over: Obj): Obj => {
+  const out: Obj = { ...base };
+  for (const [k, v] of Object.entries(over))
+    out[k] = isObj(v) && isObj(base[k]) ? merge(base[k] as Obj, v) : v;
+  return out;
+};
+
+const css = (name: string) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 /**
  * Themed ECharts wrapper.
@@ -32,8 +50,15 @@ const css = (name: string) => getComputedStyle(document.documentElement).getProp
     <div #host class="host" role="img" [attr.aria-label]="label() + '. ' + summary()"></div>
   `,
   styles: `
-    :host { display: block; width: 100%; height: var(--chart-h, 260px); }
-    .host { width: 100%; height: 100%; }
+    :host {
+      display: block;
+      width: 100%;
+      height: var(--chart-h, 260px);
+    }
+    .host {
+      width: 100%;
+      height: 100%;
+    }
   `,
 })
 export class DsChart implements OnDestroy {
@@ -64,23 +89,32 @@ export class DsChart implements OnDestroy {
     if (!this.chart) return;
     const ink = css('--ink-3');
     this.chart.setOption(
-      {
-        animation: !matchMedia('(prefers-reduced-motion: reduce)').matches,
-        animationDuration: 300,
-        color: [css('--chart-1'), css('--chart-2'), css('--chart-3'), css('--chart-4')],
-        textStyle: { fontFamily: css('--font-sans'), color: ink },
-        grid: { left: 44, right: 16, top: 20, bottom: 28 },
-        tooltip: {
-          trigger: 'axis',
-          backgroundColor: css('--surface'),
-          borderColor: css('--line-strong'),
-          textStyle: { color: css('--ink'), fontSize: 12 },
-          extraCssText: 'box-shadow:' + css('--shadow-pop'),
+      merge(
+        {
+          animation: !matchMedia('(prefers-reduced-motion: reduce)').matches,
+          animationDuration: 300,
+          color: [css('--chart-1'), css('--chart-2'), css('--chart-3'), css('--chart-4')],
+          textStyle: { fontFamily: css('--font-sans'), color: ink },
+          grid: { left: 44, right: 16, top: 20, bottom: 28 },
+          tooltip: {
+            trigger: 'axis',
+            backgroundColor: css('--surface'),
+            borderColor: css('--line-strong'),
+            textStyle: { color: css('--ink'), fontSize: 12 },
+            extraCssText: 'box-shadow:' + css('--shadow-pop'),
+          },
+          xAxis: {
+            axisLine: { lineStyle: { color: css('--line-strong') } },
+            axisLabel: { color: ink, fontSize: 11 },
+            axisTick: { show: false },
+          },
+          yAxis: {
+            splitLine: { lineStyle: { color: css('--chart-grid') } },
+            axisLabel: { color: ink, fontSize: 11 },
+          },
         },
-        xAxis: { axisLine: { lineStyle: { color: css('--line-strong') } }, axisLabel: { color: ink, fontSize: 11 }, axisTick: { show: false } },
-        yAxis: { splitLine: { lineStyle: { color: css('--chart-grid') } }, axisLabel: { color: ink, fontSize: 11 } },
-        ...this.option(),
-      },
+        this.option() as Obj,
+      ),
       true,
     );
   }

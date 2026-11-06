@@ -1,11 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/angular';
+import { componentWrapperDecorator, type Meta, type StoryObj } from '@storybook/angular';
 import { DsSparkline } from './ds-sparkline';
 
 const meta: Meta<DsSparkline> = {
   title: 'Components/Sparkline',
   component: DsSparkline,
   tags: ['autodocs'],
-  decorators: [(s) => ({ ...s(), template: `<div style="width:220px"><story /></div>` })],
+  decorators: [componentWrapperDecorator((s) => `<div style="width:220px">${s}</div>`)],
 };
 export default meta;
 type Story = StoryObj<DsSparkline>;
