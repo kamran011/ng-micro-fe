@@ -1,0 +1,2 @@
+// Storybook loads the same global stylesheet as the apps; fonts are self-hosted in .storybook/preview.ts.
+@use './global';

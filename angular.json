@@ -521,6 +521,48 @@
           }
         }
       }
+    },
+    "design-system": {
+      "projectType": "library",
+      "root": "projects/shared/ds",
+      "sourceRoot": "projects/shared/ds",
+      "prefix": "ds",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/design-system",
+            "index": "",
+            "main": "projects/shared/ds/index.ts",
+            "tsConfig": ".storybook/tsconfig.json",
+            "inlineStyleLanguage": "scss",
+            "polyfills": [
+              "zone.js"
+            ],
+            "styles": [
+              "projects/shared/styles/storybook.scss"
+            ]
+          }
+        },
+        "storybook": {
+          "builder": "@storybook/angular:start-storybook",
+          "options": {
+            "configDir": ".storybook",
+            "browserTarget": "design-system:build",
+            "compodoc": false,
+            "port": 6006
+          }
+        },
+        "build-storybook": {
+          "builder": "@storybook/angular:build-storybook",
+          "options": {
+            "configDir": ".storybook",
+            "browserTarget": "design-system:build",
+            "compodoc": false,
+            "outputDir": "storybook-static"
+          }
+        }
+      }
     }
   }
 }
